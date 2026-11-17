@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0f1e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="출발지에서 도착지까지 TMAP·카카오맵·네이버지도를 한 화면에서 비교하고 바로 안내를 시작하는 앱">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.92em' font-size='88'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-title" content="퇴근길 네비">
+<title>퇴근길 네비 비교</title>
+<script>
+try{
+  var _saved = JSON.parse(localStorage.getItem('commute-navi.v1') || '{}');
+  if (_saved && _saved.theme === 'light') { document.documentElement.setAttribute('data-theme','light'); }
+}catch(e){}
+</script>
+<style>
+:root{
+  --bg:#0a0f1e;
+  --bg-glow:rgba(77,171,247,.18);
+  --card:#151d33;
+  --card-2:#1b2544;
+  --text:#eef3ff;
+  --muted:#9aa7c7;
+  --line:rgba(255,255,255,.10);
+  --accent:#4dabf7;
+  --accent-ink:#04162c;
+  --good:#3ddc97;
+  --warn:#ffb347;
+  --bad:#ff6b6b;
+  --shadow:0 10px 30px rgba(0,0,0,.28);
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#eef1f7;
+  --bg-glow:rgba(26,109,255,.14);
+  --card:#ffffff;
+  --card-2:#f1f4fb;
+  --text:#0b1020;
+  --muted:#5a6579;
+  --line:rgba(11,16,32,.12);
+  --accent:#1a6dff;
+  --accent-ink:#ffffff;
+  --good:#0e9f6e;
+  --warn:#b25e00;
+  --bad:#d92d20;
+  --shadow:0 10px 26px rgba(16,32,64,.10);
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:radial-gradient(1100px 460px at 50% -140px, var(--bg-glow), transparent 62%), var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-size:16px;line-height:1.45;
+  min-height:100vh;
+  padding:10px 12px calc(26px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+  overflow-wrap:break-word;
+}
+body.has-cta{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+[hidden]{display:none !important}
+
+/* header */
+.head{display:flex;align-items:center;gap:10px;padding:6px 2px 12px}
+.head .logo{font-size:26px;line-height:1}
+.head h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.head p{margin:2px 0 0;font-size:12.5px;color:var(--muted);font-weight:600}
+.head .spacer{flex:1 1 auto}
+.icon-btn{
+  width:46px;height:46px;border-radius:14px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font-size:19px;display:grid;place-items:center;
+  cursor:pointer;box-shadow:var(--shadow)
+}
+.icon-btn:active{transform:scale(.96)}
+
+/* cards */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:14px;margin-bottom:12px;box-shadow:var(--shadow)
+}
+.card-tight{padding:12px 14px}
+
+/* segmented */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card-2);padding:5px;border-radius:14px;border:1px solid var(--line)}
+.seg-btn{
+  min-height:46px;border:0;border-radius:10px;background:transparent;color:var(--muted);
+  font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;padding:0 6px;
+  transition:background .15s,color .15s
+}
+.seg-btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.seg-btn:active{transform:scale(.985)}
+
+.origin-top{display:flex;align-items:center;gap:8px;margin:12px 0 4px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--warn);flex:0 0 auto;box-shadow:0 0 0 4px rgba(255,179,71,.16)}
+.dot.gps{background:var(--good);box-shadow:0 0 0 4px rgba(61,220,151,.16)}
+.dot.test{background:var(--accent);box-shadow:0 0 0 4px rgba(77,171,247,.16)}
+.origin-name{font-size:15.5px;font-weight:800;letter-spacing:-.01em}
+.origin-sub{font-size:12.5px;color:var(--muted);margin-left:auto;font-weight:600}
+
+.stats{display:grid;grid-template-columns:1.45fr .7fr .7fr;gap:8px;margin-top:10px}
+.stats>div{background:var(--card-2);border-radius:12px;padding:8px 10px;min-width:0}
+.stats span{display:block;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.02em}
+.stats b{display:block;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats>div:first-child b{font-size:12.5px;letter-spacing:-.01em}
+
+.warn{
+  margin:10px 0 0;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:600;line-height:1.4;
+  background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.34);color:var(--text)
+}
+.warn.bad{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.36)}
+
+.btn-ghost{
+  display:block;width:100%;min-height:50px;margin-top:10px;border-radius:13px;
+  border:1px solid var(--line);background:var(--card-2);color:var(--text);
+  font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer
+}
+.btn-ghost:active{transform:scale(.99)}
+
+/* refresh row */
+.refresh{display:flex;align-items:center;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.cd{display:flex;align-items:baseline;gap:3px;min-width:96px}
+.cd b{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:1}
+.cd span{font-size:13px;color:var(--muted);font-weight:700}
+.cd-side{flex:1 1 auto;min-width:0}
+.cd-title{font-size:12.5px;font-weight:800;color:var(--muted)}
+.cd-sub{font-size:13px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.btn-round{
+  width:52px;height:52px;flex:0 0 auto;border-radius:50%;border:1px solid var(--line);
+  background:var(--card-2);color:var(--text);font-size:20px;cursor:pointer;display:grid;place-items:center
+}
+.btn-round:active{transform:scale(.94)}
+.btn-round.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.chip{
+  min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--muted);font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer
+}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* destination */
+.dest-head{display:flex;align-items:flex-start;gap:10px}
+.dest-icon{font-size:22px;line-height:1.1}
+.dest-txt{min-width:0;flex:1 1 auto}
+.dest-txt b{display:block;font-size:16.5px;font-weight:800;letter-spacing:-.01em}
+.dest-txt span{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.dist-row{display:flex;align-items:flex-end;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dist{display:flex;align-items:baseline;gap:4px}
+.dist b{font-size:30px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.dist span{font-size:14px;font-weight:800;color:var(--muted)}
+.dist small{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-left:2px}
+.dist-info{flex:1 1 auto;font-size:12px;color:var(--muted);font-weight:600;line-height:1.45;text-align:right}
+.dist-info b{color:var(--text);font-weight:800}
+
+/* section head */
+.sec-head{display:flex;align-items:baseline;gap:8px;margin:16px 4px 10px}
+.sec-head h2{margin:0;font-size:15px;font-weight:900;letter-spacing:.01em}
+.cmp-status{margin-left:auto;font-size:12px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.banner{
+  display:flex;gap:9px;align-items:flex-start;
+  background:rgba(77,171,247,.10);border:1px solid rgba(77,171,247,.32);
+  border-radius:14px;padding:11px 12px;font-size:13px;font-weight:700;line-height:1.45;margin-bottom:12px
+}
+.banner .bang{font-size:15px;line-height:1.2}
+
+/* provider cards */
+.prov{
+  position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:14px 14px 12px 18px;margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)
+}
+.prov::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--brand)}
+.prov.is-fast{border-color:rgba(61,220,151,.5);box-shadow:0 0 0 1px rgba(61,220,151,.35),0 12px 28px rgba(61,220,151,.13)}
+.prov-head{display:flex;align-items:center;gap:10px}
+.prov-logo{
+  width:38px;height:38px;flex:0 0 auto;border-radius:11px;background:var(--brand);color:var(--brand-ink);
+  display:grid;place-items:center;font-size:17px;font-weight:900
+}
+.prov-title{min-width:0;flex:1 1 auto}
+.prov-title b{display:block;font-size:16px;font-weight:900;letter-spacing:-.01em}
+.prov-title small{display:block;font-size:11.5px;color:var(--muted);font-weight:700;margin-top:1px}
+.prov-badge{
+  flex:0 0 auto;font-size:11.5px;font-weight:900;color:#052018;background:var(--good);
+  padding:5px 9px;border-radius:999px;letter-spacing:-.01em
+}
+.prov-body{margin-top:12px;min-height:44px}
+.prov-time{font-size:33px;font-weight:900;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
+.prov-time b{font-size:33px}
+.prov-time span.unit{font-size:15px;font-weight:800;color:var(--muted);margin-left:2px}
+.prov-time .na{font-size:16px;font-weight:800;color:var(--muted);letter-spacing:-.01em}
+.prov-sub{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:4px;line-height:1.4}
+.prov-sub.err{color:var(--bad)}
+.prov-sub.loading{color:var(--accent)}
+.btn-launch{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;margin-top:12px;
+  border-radius:14px;background:var(--brand);color:var(--brand-ink);text-decoration:none;
+  font-size:16.5px;font-weight:900;letter-spacing:-.01em;box-shadow:0 6px 16px rgba(0,0,0,.18)
+}
+.btn-launch:active{transform:scale(.985)}
+.prov-links{display:flex;gap:16px;justify-content:center;margin-top:8px}
+.prov-links a{
+  color:var(--muted);text-decoration:none;font-size:13px;font-weight:700;padding:7px 2px;
+  border-bottom:1px solid transparent
+}
+.prov-links a:active{color:var(--text)}
+
+/* note */
+.note{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0;margin-top:16px;box-shadow:var(--shadow)}
+.note summary{
+  list-style:none;cursor:pointer;padding:14px 16px;font-size:14px;font-weight:800;
+  display:flex;align-items:center;gap:8px
+}
+.note summary::-webkit-details-marker{display:none}
+.note summary::after{content:"▾";margin-left:auto;color:var(--muted);font-size:13px}
+.note[open] summary::after{content:"▴"}
+.note .note-body{padding:0 16px 16px;font-size:13px;line-height:1.6;color:var(--muted)}
+.note .note-body h3{margin:14px 0 5px;font-size:13px;font-weight:900;color:var(--text)}
+.note .note-body h3:first-child{margin-top:2px}
+.note .note-body ul{margin:4px 0 0;padding-left:18px}
+.note .note-body li{margin:3px 0}
+.note .note-body code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  background:var(--card-2);border-radius:6px;padding:1px 5px;color:var(--text)
+}
+.note .note-body a{color:var(--accent)}
+
+/* sticky CTA */
+.sticky{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, var(--bg) 55%, rgba(0,0,0,0));
+  display:flex;justify-content:center
+}
+.sticky-inner{width:100%;max-width:560px}
+.cta{
+  display:block;width:100%;min-height:62px;border:0;border-radius:17px;cursor:pointer;
+  background:linear-gradient(135deg,#48e0a4,#20b39a);color:#02241b;
+  font-family:inherit;font-size:17px;font-weight:900;letter-spacing:-.02em;
+  box-shadow:0 12px 28px rgba(32,179,154,.32);
+  text-decoration:none;text-align:center;line-height:1.25;padding:12px 14px
+}
+.cta small{display:block;font-size:12px;font-weight:800;opacity:.78;margin-top:1px}
+.cta:active{transform:scale(.99)}
+
+/* toast */
+.toast{
+  position:fixed;z-index:60;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;
+  max-width:536px;margin:0 auto;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.42);
+  padding:13px 14px;animation:drop .22s ease-out
+}
+@keyframes drop{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
+.toast b{display:block;font-size:14.5px;font-weight:900}
+.toast p{margin:4px 0 0;font-size:12.5px;color:var(--muted);font-weight:600;line-height:1.45}
+.toast .t-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.toast .t-actions a,.toast .t-actions button{
+  flex:1 1 auto;min-height:44px;display:flex;align-items:center;justify-content:center;
+  border-radius:11px;border:1px solid var(--line);background:var(--card-2);color:var(--text);
+  font-family:inherit;font-size:13.5px;font-weight:800;text-decoration:none;padding:0 10px;cursor:pointer
+}
+.toast .t-actions a.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(4,8,18,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.sheet{
+  width:100%;max-width:560px;max-height:90vh;overflow:auto;background:var(--card);
+  border:1px solid var(--line);border-radius:22px 22px 0 0;
+  padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+  animation:up .24s ease-out
+}
+@keyframes up{from{transform:translateY(26px)}to{transform:none}}
+.sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sheet-head h2{margin:0;font-size:17px;font-weight:900}
+.sheet-head .icon-btn{margin-left:auto;width:42px;height:42px;font-size:16px;box-shadow:none}
+fieldset{border:0;margin:16px 0 0;padding:0}
+legend{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.04em;padding:0;margin-bottom:8px;text-transform:uppercase}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:5px}
+.field input{
+  width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--text);font-family:inherit;font-size:16px;font-weight:600;
+  padding:10px 12px;outline:none
+}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(77,171,247,.18)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.5;margin:8px 0 0;font-weight:600}
+.form-err{color:var(--bad);font-size:12.5px;font-weight:800;margin:8px 0 0}
+.sheet-actions{display:flex;gap:8px;margin-top:18px}
+.sheet-actions button{
+  flex:1 1 0;min-height:52px;border-radius:13px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--text);font-family:inherit;font-size:15px;font-weight:900;cursor:pointer
+}
+.sheet-actions button[type="submit"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.foot{text-align:center;font-size:11px;color:var(--muted);font-weight:600;margin:18px 0 0;line-height:1.6}
+
+@media (max-width:360px){
+  body{font-size:15px;padding-left:10px;padding-right:10px}
+  .prov-time b{font-size:29px}
+  .cd b{font-size:28px}
+  .cd{min-width:82px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <span class="logo" aria-hidden="true">🧭</span>
+    <div>
+      <h1>퇴근길 네비 비교</h1>
+      <p id="headDest">도착지를 설정하세요</p>
+    </div>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="btnTheme" type="button" aria-label="테마 전환">🌙</button>
+    <button class="icon-btn" id="btnSettings" type="button" aria-label="설정 열기">⚙️</button>
+  </header>
+
+  <!-- 출발지 / 갱신 -->
+  <section class="card">
+    <div class="seg" role="group" aria-label="출발지 선택">
+      <button class="seg-btn" type="button" data-mode="gps" aria-pressed="true">📡 현재 GPS</button>
+      <button class="seg-btn" type="button" data-mode="test" aria-pressed="false">🏭 테스트 출발지</button>
+    </div>
+
+    <div class="origin-top">
+      <span class="dot" id="originDot"></span>
+      <span class="origin-name" id="originName">GPS 확인 중…</span>
+      <span class="origin-sub" id="originSub">출발지</span>
+    </div>
+
+    <div class="stats">
+      <div><span>현재 좌표</span><b id="statCoord">--</b></div>
+      <div><span>정확도</span><b id="statAcc">--</b></div>
+      <div><span>갱신</span><b id="statAgo">--</b></div>
+    </div>
+
+    <p class="warn" id="gpsWarn" hidden></p>
+    <button class="btn-ghost" id="btnGpsRetry" type="button" hidden>📍 위치 권한 다시 요청</button>
+
+    <div class="refresh">
+      <div class="cd"><b id="cdNum">--</b><span id="cdUnit">초</span></div>
+      <div class="cd-side">
+        <div class="cd-title">다음 자동 갱신</div>
+        <div class="cd-sub" id="cdSub">준비 중…</div>
+      </div>
+      <button class="btn-round" id="btnRefresh" type="button" aria-label="지금 새로고침">🔄</button>
+    </div>
+
+    <div class="chips" id="intervalChips" role="group" aria-label="자동 갱신 주기">
+      <button class="chip" type="button" data-sec="30">30초</button>
+      <button class="chip" type="button" data-sec="60">1분</button>
+      <button class="chip" type="button" data-sec="180">3분</button>
+      <button class="chip" type="button" data-sec="0">수동</button>
+    </div>
+  </section>
+
+  <!-- 도착지 -->
+  <section class="card">
+    <div class="dest-head">
+      <span class="dest-icon" aria-hidden="true">🏠</span>
+      <div class="dest-txt">
+        <b id="destName">도착지를 설정하세요</b>
+        <span id="destAddr">⚙️ 설정에서 도착지를 입력하세요</span>
+      </div>
+    </div>
+    <div class="dist-row">
+      <div class="dist"><b id="straight">--</b><span>km</span></div>
+      <div class="dist-info">
+        <div>직선거리 (현재 출발지 기준)</div>
+        <div style="margin-top:3px">실제 주행거리는 보통 <b>1.2~1.4배</b>입니다</div>
+        <div id="distFrom" style="margin-top:3px">출발: --</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sec-head">
+    <h2>3사 길안내</h2>
+    <span class="cmp-status" id="cmpStatus">API 키 미설정</span>
+  </div>
+
+  <div class="banner" id="keysBanner">
+    <span class="bang" aria-hidden="true">⚙️</span>
+    <span>API 키 미설정 — 각 앱 바로 열기로 실시간 시간 비교</span>
+  </div>
+
+  <div id="cards"></div>
+
+  <details class="note">
+    <summary>📖 사용 안내 · 홈 화면 추가 · API 키</summary>
+    <div class="note-body">
+      <h3>① 브라우저 GPS는 HTTPS(또는 localhost)에서만</h3>
+      <p>휴대폰 브라우저는 보안 연결이 아니면 위치를 주지 않습니다. <code>file://</code>로 파일을 열면 위치가 잡히지 않아 <b>테스트 출발지</b>로 자동 대체됩니다.
+      HTTPS 주소로 열거나, 같은 와이파이의 PC에서 <code>python -m http.server</code>로 띄우면 위치가 동작합니다. 파일을 Netlify Drop·GitHub Pages 같은 무료 HTTPS 호스팅에 올려 열면 폰에서도 GPS와 앱 실행이 모두 가장 매끄럽습니다.</p>
+
+      <h3>② Android 홈 화면에 추가</h3>
+      <ol style="margin:4px 0 0;padding-left:18px">
+        <li>Chrome에서 이 페이지를 엽니다.</li>
+        <li>오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b> (또는 '앱 설치').</li>
+        <li>홈 화면의 아이콘을 누르면 주소창 없이 전체 화면으로 열립니다.</li>
+      </ol>
+
+      <h3>③ 앱이 안 열릴 때</h3>
+      <p>카카오톡·인스타그램 같은 <b>인앱 브라우저</b>는 <code>tmap://</code>, <code>nmap://</code> 같은 앱 실행을 막는 경우가 많습니다.
+      Chrome으로 열어 주세요. 앱이 설치되어 있지 않으면 카드 아래 <b>앱 설치</b> 링크로 설치할 수 있습니다.</p>
+
+      <h3>④ 실시간 소요시간(선택)</h3>
+      <p>⚙️ 설정에 API 키를 넣으면 갱신할 때마다 3사의 주행 시간·거리·통행료를 자동으로 받아 <b>가장 빠른 길</b>을 표시하고, 아래 버튼으로 바로 안내를 시작합니다.
+      키는 이 브라우저(localStorage)에만 저장되며 외부로 전송되지 않습니다.</p>
+      <ul>
+        <li>TMAP: <code>apis.openapi.sk.com/tmap/routes</code> · App Key</li>
+        <li>카카오모빌리티: <code>apis-navi.kakaomobility.com/v1/directions</code> · REST API 키</li>
+        <li>네이버 클라우드: <code>maps.apigw.ntruss.com/map-direction/v1/driving</code> · Client ID/Secret</li>
+      </ul>
+      <p>브라우저에서 외부 API를 직접 부르면 <b>CORS</b>로 막히는 경우가 있습니다. 이때는 설정의 <b>CORS 프록시</b>에 프록시 주소(<code>https://프록시/?url={url}</code>)를 넣으면 됩니다. 프록시가 헤더를 전달해야 인증이 됩니다.</p>
+
+      <h3>⑤ 참고</h3>
+      <p>표시되는 시간은 각 사 API의 응답이며 실제 교통 상황과 다를 수 있습니다. 안전 운전을 위해 출발 전에만 조작하세요.</p>
+    </div>
+  </details>
+
+  <p class="foot">출발지 → 도착지 · 도착지 좌표는 설정 또는 링크에서 지정됩니다</p>
+</div>
+
+<!-- sticky CTA -->
+<div class="sticky" id="stickyCta" hidden>
+  <div class="sticky-inner">
+    <a class="cta" id="ctaBtn" href="#" target="_blank" rel="noopener noreferrer">🏆 가장 빠른 길로 안내 시작</a>
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- settings -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="sheet-head">
+      <h2 id="setTitle">⚙️ 설정</h2>
+      <button class="icon-btn" id="setClose" type="button" aria-label="닫기">✕</button>
+    </div>
+
+    <form id="setForm" novalidate>
+      <fieldset>
+        <legend>도착지</legend>
+        <div class="field"><label for="fDestName">이름</label><input id="fDestName" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="fDestAddr">주소</label><input id="fDestAddr" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="field-row">
+          <div class="field"><label for="fDestLat">위도</label><input id="fDestLat" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div class="field"><label for="fDestLng">경도</label><input id="fDestLng" type="text" inputmode="decimal" autocomplete="off"></div>
+        </div>
+        <p class="hint">지도 앱에서 위치를 길게 눌러 나오는 좌표를 붙여넣으면 됩니다.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>테스트 출발지</legend>
+        <div class="field"><label for="fTestName">이름</label><input id="fTestName" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="field"><label for="fTestAddr">주소</label><input id="fTestAddr" type="text" autocomplete="off" spellcheck="false"></div>
+        <div class="field-row">
+          <div class="field"><label for="fTestLat">위도</label><input id="fTestLat" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div class="field"><label for="fTestLng">경도</label><input id="fTestLng" type="text" inputmode="decimal" autocomplete="off"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>실시간 API 키 (선택)</legend>
+        <div class="field"><label for="fTmap">TMAP App Key</label><input id="fTmap" type="text" autocomplete="off" spellcheck="false" placeholder="선택 사항"></div>
+        <div class="field"><label for="fKakao">카카오모빌리티 REST API 키</label><input id="fKakao" type="text" autocomplete="off" spellcheck="false" placeholder="선택 사항"></div>
+        <div class="field-row">
+          <div class="field"><label for="fNaverId">네이버 Client ID</label><input id="fNaverId" type="text" autocomplete="off" spellcheck="false" placeholder="선택"></div>
+          <div class="field"><label for="fNaverSecret">Client Secret</label><input id="fNaverSecret" type="text" autocomplete="off" spellcheck="false" placeholder="선택"></div>
+        </div>
+        <div class="field"><label for="fProxy">CORS 프록시 (선택)</label><input id="fProxy" type="text" autocomplete="off" spellcheck="false" placeholder="https://프록시/?url={url}"></div>
+        <p class="hint">키는 이 기기 브라우저에만 저장됩니다. 비워 두면 카드는 앱 바로 열기 모드로 동작합니다.</p>
+      </fieldset>
+
+      <p class="form-err" id="formErr" hidden></p>
+
+      <div class="sheet-actions">
+        <button type="button" id="setReset">기본값</button>
+        <button type="submit">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<noscript>
+  <p style="padding:16px">이 앱은 JavaScript가 필요합니다. 브라우저 설정에서 JavaScript를 켜 주세요.</p>
+</noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ *
+   * 0. 기본값
+   * ------------------------------------------------------------------ */
+  var STORE_KEY = 'commute-navi.v1';
+  var DEFAULTS = {
+    dest: { name: '도착지를 설정하세요', addr: '', lat: 35.179554, lng: 129.075642 },
+    test: { name: '테스트 출발지', addr: '', lat: 35.179554, lng: 129.075642 },
+    keys: { tmap: '', kakao: '', naverId: '', naverSecret: '', proxy: '' },
+    interval: 60,
+    theme: 'dark'
+  };
+
+  var PROVIDERS = [
+    {
+      id: 'tmap', name: 'TMAP', sub: '티맵', logo: 'T',
+      brand: '#1f6bff', brandInk: '#ffffff',
+      launchLabel: 'TMAP으로 길안내',
+      links: [
+        { key: 'web', label: '웹 지도', href: 'https://tmap.life/' },
+        { key: 'install', label: '앱 설치', href: 'https://play.google.com/store/search?q=%ED%8B%B0%EB%A7%B5&c=apps' }
+      ],
+      fareLabel: '유류+통행'
+    },
+    {
+      id: 'kakao', name: '카카오맵', sub: '카카오내비', logo: 'K',
+      brand: '#fee500', brandInk: '#231f20',
+      launchLabel: '카카오맵으로 길안내',
+      links: [
+        { key: 'navi', label: '카카오내비 앱', href: '#' },
+        { key: 'install', label: '앱 설치', href: 'https://play.google.com/store/search?q=%EC%B9%B4%EC%B9%B4%EC%98%A4%EB%A7%B5&c=apps' }
+      ],
+      fareLabel: '통행료'
+    },
+    {
+      id: 'naver', name: '네이버지도', sub: '네이버내비', logo: 'N',
+      brand: '#03c75a', brandInk: '#04231a',
+      launchLabel: '네이버지도로 길안내',
+      links: [
+        { key: 'web', label: '웹 지도', href: 'https://map.naver.com/' },
+        { key: 'webdir', label: '웹 길찾기', href: 'https://map.naver.com/' },
+        { key: 'install', label: '앱 설치', href: 'https://play.google.com/store/search?q=%EB%84%A4%EC%9D%B4%EB%B2%84%EC%A7%80%EB%8F%84&c=apps' }
+      ],
+      fareLabel: '통행료'
+    }
+  ];
+
+  /* ------------------------------------------------------------------ *
+   * 1. 상태
+   * ------------------------------------------------------------------ */
+  var app = {
+    cfg: null,
+    mode: 'gps',
+    interval: 60,
+    theme: 'dark',
+    gps: null,            // {lat,lng,acc,ts}
+    gpsErr: null,
+    gpsErrCode: null,
+    watchId: null,
+    results: {},          // id -> {loading} | {ok:true,...} | {error}
+    fastest: null,
+    fetching: false,
+    fetchSeq: 0,
+    nextAt: 0,
+    lastRefreshAt: 0,
+    targets: null,
+    lastApiPos: null,
+    pendingRefresh: false
+  };
+
+  var els = {};
+  var refs = {};
+
+  function $(id) { return document.getElementById(id); }
+  function qs(sel, root) { return (root || document).querySelector(sel); }
+  function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  /* ------------------------------------------------------------------ *
+   * 2. 유틸
+   * ------------------------------------------------------------------ */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function numOr(v, d) {
+    var n = parseFloat(v);
+    return isFinite(n) ? n : d;
+  }
+  function strOr(v, d) {
+    return (typeof v === 'string' && v.length) ? v : d;
+  }
+  function round6(v) { return Math.round(v * 1e6) / 1e6; }
+  function coord6(v) { return Number(v).toFixed(6); }
+  function isScheme(href) { return /^(nmap|tmap|kakaomap):\/\//.test(String(href || '')); }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  function toRad(d) { return d * Math.PI / 180; }
+  function distanceKm(a, b) {
+    var R = 6371.0088;
+    var dLat = toRad(b.lat - a.lat);
+    var dLng = toRad(b.lng - a.lng);
+    var s1 = Math.sin(dLat / 2), s2 = Math.sin(dLng / 2);
+    var h = s1 * s1 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * s2 * s2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+
+  function fmtDistM(m) {
+    if (m == null || !isFinite(m)) return '';
+    if (m < 1000) return Math.round(m) + 'm';
+    return (m / 1000).toFixed(1) + 'km';
+  }
+  function fmtFare(w) {
+    if (w == null || !isFinite(w) || w <= 0) return '';
+    var n = String(Math.round(w));
+    return n.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
+  }
+  function fmtMins(sec) {
+    var m = Math.round((sec || 0) / 60);
+    if (m < 1) return 1;
+    return m;
+  }
+  function fmtClock(ts) {
+    var d = new Date(ts);
+    return String(d.getHours()).padStart(2, '0') + ':' +
+           String(d.getMinutes()).padStart(2, '0') + ':' +
+           String(d.getSeconds()).padStart(2, '0');
+  }
+  function fmtAgo(ts) {
+    if (!ts) return '--';
+    var s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if (s < 10) return '방금 전';
+    if (s < 60) return s + '초 전';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + '분 전';
+    var h = Math.floor(m / 60);
+    return h + '시간 전';
+  }
+  function fmtInterval(sec) {
+    if (sec === 30) return '30초';
+    if (sec === 60) return '1분';
+    if (sec === 180) return '3분';
+    return '수동';
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 3. 저장/불러오기
+   * ------------------------------------------------------------------ */
+  function defaultCfg() {
+    return JSON.parse(JSON.stringify(DEFAULTS));
+  }
+
+  function loadCfg() {
+    var cfg = defaultCfg();
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { saved = null; }
+    if (!saved || typeof saved !== 'object') return cfg;
+
+    if (saved.dest && typeof saved.dest === 'object') {
+      cfg.dest.name = strOr(saved.dest.name, cfg.dest.name);
+      cfg.dest.addr = strOr(saved.dest.addr, cfg.dest.addr);
+      cfg.dest.lat = clamp(numOr(saved.dest.lat, cfg.dest.lat), -90, 90);
+      cfg.dest.lng = clamp(numOr(saved.dest.lng, cfg.dest.lng), -180, 180);
+    }
+    if (saved.test && typeof saved.test === 'object') {
+      cfg.test.name = strOr(saved.test.name, cfg.test.name);
+      cfg.test.addr = strOr(saved.test.addr, cfg.test.addr);
+      cfg.test.lat = clamp(numOr(saved.test.lat, cfg.test.lat), -90, 90);
+      cfg.test.lng = clamp(numOr(saved.test.lng, cfg.test.lng), -180, 180);
+    }
+    if (saved.keys && typeof saved.keys === 'object') {
+      Object.keys(cfg.keys).forEach(function (k) {
+        if (typeof saved.keys[k] === 'string') cfg.keys[k] = saved.keys[k];
+      });
+    }
+    if (typeof saved.interval === 'number') cfg.interval = saved.interval;
+    if (saved.theme === 'light' || saved.theme === 'dark') cfg.theme = saved.theme;
+    return cfg;
+  }
+
+  function saveCfg() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        dest: app.cfg.dest,
+        test: app.cfg.test,
+        keys: app.cfg.keys,
+        interval: app.interval,
+        theme: app.theme
+      }));
+    } catch (e) { /* 저장 불가(시크릿 모드 등) */ }
+  }
+
+  function hasKey(id) {
+    var k = app.cfg.keys;
+    if (id === 'tmap') return !!k.tmap.trim();
+    if (id === 'kakao') return !!k.kakao.trim();
+    if (id === 'naver') return !!(k.naverId.trim() && k.naverSecret.trim());
+    return false;
+  }
+  function anyKey() {
+    return hasKey('tmap') || hasKey('kakao') || hasKey('naver');
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 3-1. 링크 해시로 개인 설정 주입
+   *   #dname=..&daddr=..&dlat=..&dlng=..&tname=..&taddr=..&tlat=..&tlng=..
+   *   해시는 서버로 전송되지 않고, 값은 이 브라우저(localStorage)에만 저장됩니다.
+   *   적용 후 주소창에서 해시를 지워 기록에 개인 정보가 남지 않게 합니다.
+   * ------------------------------------------------------------------ */
+  var HASH_MAP = [
+    ['dest', 'name', 'dname'], ['dest', 'addr', 'daddr'],
+    ['dest', 'lat', 'dlat'], ['dest', 'lng', 'dlng'],
+    ['test', 'name', 'tname'], ['test', 'addr', 'taddr'],
+    ['test', 'lat', 'tlat'], ['test', 'lng', 'tlng']
+  ];
+
+  function readHashParams() {
+    var raw = String(location.hash || '').replace(/^#/, '');
+    if (!raw) return null;
+    if (raw.charAt(0) === '?' || raw.charAt(0) === '&') raw = raw.slice(1);
+    var out = {};
+    raw.split('&').forEach(function (pair) {
+      if (!pair) return;
+      var i = pair.indexOf('=');
+      var k = i < 0 ? pair : pair.slice(0, i);
+      var v = i < 0 ? '' : pair.slice(i + 1);
+      try {
+        out[decodeURIComponent(k)] = decodeURIComponent(v.replace(/\+/g, ' '));
+      } catch (e) { out[k] = v; }
+    });
+    return out;
+  }
+
+  function applyHashConfig() {
+    var q = readHashParams();
+    if (!q) return;
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch (e) { saved = null; }
+    if (!saved || typeof saved !== 'object') saved = {};
+    var changed = false;
+    HASH_MAP.forEach(function (m) {
+      var raw = q[m[2]];
+      if (raw == null || raw === '') return;
+      if (!saved[m[0]] || typeof saved[m[0]] !== 'object') saved[m[0]] = {};
+      var val = (m[1] === 'lat' || m[1] === 'lng') ? numOr(raw, null) : raw;
+      if ((m[1] === 'lat' || m[1] === 'lng') && val == null) return;
+      if (m[1] === 'lat') val = clamp(val, -90, 90);
+      if (m[1] === 'lng') val = clamp(val, -180, 180);
+      if (saved[m[0]][m[1]] !== val) { saved[m[0]][m[1]] = val; changed = true; }
+    });
+    if (!changed) return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(saved)); } catch (e) { /* 저장 불가 */ }
+    try { history.replaceState(null, '', location.pathname + location.search); }
+    catch (e) { location.hash = ''; }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 4. 출발지
+   * ------------------------------------------------------------------ */
+  function originInfo() {
+    var t = app.cfg.test;
+    if (app.mode === 'test') {
+      return { lat: t.lat, lng: t.lng, name: t.name, src: 'test', ts: 0 };
+    }
+    if (app.gps) {
+      return { lat: app.gps.lat, lng: app.gps.lng, name: '현재위치', src: 'gps', ts: app.gps.ts, acc: app.gps.acc };
+    }
+    return { lat: t.lat, lng: t.lng, name: t.name, src: 'fallback', ts: 0 };
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 5. 딥링크 / 웹링크
+   * ------------------------------------------------------------------ */
+  function buildTargets(o) {
+    var d = app.cfg.dest;
+    var enc = encodeURIComponent;
+    var oLat = coord6(o.lat), oLng = coord6(o.lng);
+    var dLat = coord6(d.lat), dLng = coord6(d.lng);
+    var oName = enc(o.name || '현재위치');
+    var dName = enc(d.name);
+
+    var tmapApp = 'tmap://route?startname=' + oName + '&startx=' + oLng + '&starty=' + oLat +
+                  '&goalname=' + dName + '&goalx=' + dLng + '&goaly=' + dLat;
+
+    var kakaoWeb = 'https://map.kakao.com/link/by/car/' + oName + ',' + oLat + ',' + oLng +
+                   '/' + dName + ',' + dLat + ',' + dLng;
+    var kakaoNavi = 'kakaomap://route?sp=' + oLat + ',' + oLng + '&ep=' + dLat + ',' + dLng + '&by=CAR';
+
+    var naverApp = 'nmap://route/car?slat=' + oLat + '&slng=' + oLng + '&sname=' + oName +
+                   '&dlat=' + dLat + '&dlng=' + dLng + '&dname=' + dName + '&appname=commute-navi';
+    var naverWebDir = 'https://map.naver.com/p/directions/' + oLng + ',' + oLat + ',' + oName +
+                      '/' + dLng + ',' + dLat + ',' + dName + '/-/car';
+
+    return {
+      tmap: { launch: tmapApp, links: { web: 'https://tmap.life/' } },
+      kakao: { launch: kakaoWeb, links: { navi: kakaoNavi } },
+      naver: { launch: naverApp, links: { web: 'https://map.naver.com/', webdir: naverWebDir } }
+    };
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 6. 카드 렌더링
+   * ------------------------------------------------------------------ */
+  function cardHtml(p) {
+    var links = p.links.map(function (l, i) {
+      return '<a href="' + esc(l.href) + '" data-link="' + i + '" target="_blank" rel="noopener noreferrer">' + esc(l.label) + '</a>';
+    }).join('');
+
+    return '' +
+      '<article class="prov" id="card-' + p.id + '" data-p="' + p.id + '" style="--brand:' + p.brand + ';--brand-ink:' + p.brandInk + '">' +
+        '<div class="prov-head">' +
+          '<span class="prov-logo" aria-hidden="true">' + esc(p.logo) + '</span>' +
+          '<div class="prov-title"><b>' + esc(p.name) + '</b><small>' + esc(p.sub) + '</small></div>' +
+          '<span class="prov-badge" data-role="badge" hidden>🏆 최단 시간</span>' +
+        '</div>' +
+        '<div class="prov-body">' +
+          '<div class="prov-time" data-role="time"><span class="na">앱에서 확인</span></div>' +
+          '<div class="prov-sub" data-role="sub">실시간 소요시간은 앱에서 표시됩니다</div>' +
+        '</div>' +
+        '<a class="btn-launch" data-role="launch" href="#" target="_blank" rel="noopener noreferrer">' + esc(p.launchLabel) + '</a>' +
+        '<div class="prov-links">' + links + '</div>' +
+      '</article>';
+  }
+
+  function renderCards() {
+    els.cards.innerHTML = PROVIDERS.map(cardHtml).join('');
+    refs = {};
+    PROVIDERS.forEach(function (p) {
+      var card = $('card-' + p.id);
+      refs[p.id] = {
+        card: card,
+        time: qs('[data-role="time"]', card),
+        sub: qs('[data-role="sub"]', card),
+        badge: qs('[data-role="badge"]', card),
+        launch: qs('[data-role="launch"]', card),
+        links: qsa('[data-link]', card)
+      };
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 7. 화면 갱신
+   * ------------------------------------------------------------------ */
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', app.theme);
+    els.btnTheme.textContent = app.theme === 'dark' ? '🌙' : '☀️';
+    els.btnTheme.setAttribute('aria-label', app.theme === 'dark' ? '라이트 테마로 전환' : '다크 테마로 전환');
+  }
+
+  function renderDest() {
+    var d = app.cfg.dest;
+    els.headDest.textContent = d.name;
+    els.destName.textContent = d.name;
+    els.destAddr.textContent = d.addr;
+    document.querySelectorAll('.foot').forEach(function (n) {
+      n.textContent = '출발지 → ' + d.name + ' · 좌표 ' + Number(d.lat).toFixed(5) + ', ' + Number(d.lng).toFixed(5);
+    });
+  }
+
+  function renderModeButtons() {
+    qsa('.seg-btn', els.modeSeg).forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-mode') === app.mode ? 'true' : 'false');
+    });
+  }
+
+  function renderIntervalChips() {
+    qsa('.chip', els.intervalChips).forEach(function (b) {
+      b.setAttribute('aria-pressed', Number(b.getAttribute('data-sec')) === app.interval ? 'true' : 'false');
+    });
+  }
+
+  function renderOrigin() {
+    var o = originInfo();
+    var isGps = o.src === 'gps';
+    var dot = els.originDot;
+    dot.className = 'dot' + (isGps ? ' gps' : (o.src === 'test' ? ' test' : ''));
+
+    if (isGps) {
+      els.originName.textContent = '현재 GPS 위치';
+      els.originSub.textContent = '실시간 추적 중';
+    } else if (o.src === 'test') {
+      els.originName.textContent = app.cfg.test.name + ' (테스트)';
+      els.originSub.textContent = '고정 위치';
+    } else {
+      els.originName.textContent = 'GPS 대기 중 · ' + app.cfg.test.name + ' 위치 사용';
+      els.originSub.textContent = '임시 출발지';
+    }
+
+    els.statCoord.textContent = Number(o.lat).toFixed(5) + ', ' + Number(o.lng).toFixed(5);
+    els.statAcc.textContent = isGps ? ('±' + Math.round(app.gps.acc || 0) + 'm') : (o.src === 'test' ? '고정' : '--');
+    els.statAgo.textContent = isGps ? fmtAgo(o.ts) : (o.src === 'test' ? '테스트' : '--');
+
+    // 경고 / 재시도
+    var warn = null, bad = false, showRetry = false;
+    if (app.mode === 'gps') {
+      if (!window.isSecureContext) {
+        warn = '🔒 HTTPS가 아니라 브라우저 위치를 쓸 수 없어요. ' + app.cfg.test.name + ' 위치로 표시합니다. HTTPS 주소로 열면 GPS가 동작합니다.';
+        bad = true;
+        showRetry = true;
+      } else if (app.gpsErr) {
+        warn = app.gpsErr;
+        if (location.protocol === 'file:') {
+          warn += ' 파일(file://)로 열면 Chrome이 위치를 막는 경우가 많아요. HTTPS 주소로 열면 확실합니다.';
+        }
+        bad = true;
+        showRetry = true;
+      } else if (!app.gps) {
+        warn = '📍 위치를 확인하는 중입니다. 권한을 허용해 주세요.';
+        showRetry = true;
+      }
+    }
+    if (warn) {
+      els.gpsWarn.textContent = warn;
+      els.gpsWarn.className = 'warn' + (bad ? ' bad' : '');
+      els.gpsWarn.hidden = false;
+    } else {
+      els.gpsWarn.hidden = true;
+    }
+    els.btnGpsRetry.hidden = !showRetry;
+  }
+
+  function renderLinksAndDistance() {
+    var o = originInfo();
+    app.targets = buildTargets(o);
+
+    PROVIDERS.forEach(function (p) {
+      var r = refs[p.id];
+      if (!r) return;
+      var t = app.targets[p.id];
+      r.launch.setAttribute('href', t.launch);
+      r.launch.setAttribute('target', isScheme(t.launch) ? '_self' : '_blank');
+      r.links.forEach(function (a, i) {
+        var def = p.links[i];
+        var href = (t.links && t.links[def.key]) || def.href;
+        a.setAttribute('href', href || '#');
+        a.setAttribute('target', isScheme(href) ? '_self' : '_blank');
+      });
+    });
+
+    var km = distanceKm(o, app.cfg.dest);
+    els.straight.textContent = km < 1 ? (km * 1000).toFixed(0) : km.toFixed(1);
+    els.distFrom.textContent = '출발: ' + (o.src === 'gps' ? '현재 GPS 위치' : (o.src === 'test' ? app.cfg.test.name + ' (테스트)' : app.cfg.test.name));
+    if (km < 1) {
+      els.straight.nextElementSibling.textContent = 'm';
+    } else {
+      els.straight.nextElementSibling.textContent = 'km';
+    }
+  }
+
+  function renderCardResult(id) {
+    var p = PROVIDERS.filter(function (x) { return x.id === id; })[0];
+    var r = refs[id];
+    if (!r) return;
+    var res = app.results[id];
+
+    r.card.classList.toggle('is-fast', app.fastest === id && !!res && res.ok === true);
+    r.badge.hidden = !(app.fastest === id && !!res && res.ok === true);
+    r.sub.className = 'prov-sub';
+
+    if (!res) {
+      r.time.innerHTML = '<span class="na">앱에서 확인</span>';
+      r.sub.textContent = hasKey(id) ? '대기 중' : '실시간 소요시간은 앱에서 표시됩니다';
+      return;
+    }
+    if (res.loading) {
+      r.time.innerHTML = '<span class="na">확인 중…</span>';
+      r.sub.textContent = '경로를 계산하고 있습니다';
+      r.sub.className = 'prov-sub loading';
+      return;
+    }
+    if (res.error) {
+      r.time.innerHTML = '<span class="na">—</span>';
+      r.sub.textContent = res.error;
+      r.sub.className = 'prov-sub err';
+      return;
+    }
+    // ok
+    var mins = fmtMins(res.durationSec);
+    r.time.innerHTML = '<b>' + mins + '</b><span class="unit">분</span>';
+    var bits = [];
+    if (res.distanceM) bits.push(fmtDistM(res.distanceM));
+    var fare = fmtFare(res.fareWon);
+    if (fare) bits.push((p.fareLabel || '통행료') + ' ' + fare);
+    r.sub.textContent = bits.length ? bits.join(' · ') : '경로 확인됨';
+  }
+
+  function renderCmpStatus() {
+    if (!anyKey()) {
+      els.cmpStatus.textContent = 'API 키 미설정';
+      els.keysBanner.hidden = false;
+      return;
+    }
+    els.keysBanner.hidden = true;
+    if (app.fetching) {
+      els.cmpStatus.textContent = '실시간 확인 중…';
+    } else if (app.lastRefreshAt) {
+      els.cmpStatus.textContent = fmtClock(app.lastRefreshAt).slice(0, 5) + ' 기준 실시간';
+    } else {
+      els.cmpStatus.textContent = '실시간 비교';
+    }
+  }
+
+  function renderCountdown() {
+    if (!app.interval) {
+      els.cdNum.textContent = '수동';
+      els.cdUnit.textContent = '';
+      els.cdSub.textContent = app.lastRefreshAt ? ('마지막 갱신 ' + fmtClock(app.lastRefreshAt)) : '자동 갱신 꺼짐';
+      return;
+    }
+    if (!app.nextAt) {
+      els.cdNum.textContent = '--';
+      els.cdUnit.textContent = '초';
+    } else {
+      var left = Math.max(0, Math.ceil((app.nextAt - Date.now()) / 1000));
+      els.cdNum.textContent = String(left);
+      els.cdUnit.textContent = '초';
+    }
+    var sub = fmtInterval(app.interval) + '마다';
+    if (app.lastRefreshAt) sub += ' · ' + fmtClock(app.lastRefreshAt) + ' 갱신';
+    els.cdSub.textContent = sub;
+  }
+
+  function renderCta() {
+    var id = app.fastest;
+    var res = id ? app.results[id] : null;
+    if (!id || !res || !res.ok) {
+      setCtaVisible(false);
+      return;
+    }
+    var p = PROVIDERS.filter(function (x) { return x.id === id; })[0];
+    var mins = fmtMins(res.durationSec);
+    els.ctaBtn.innerHTML = '🏆 ' + esc(p.name) + ' ' + mins + '분 — 가장 빠른 길로 안내 시작' +
+      '<small>' + esc(p.sub) + ' 앱으로 바로 이동</small>';
+    els.ctaBtn.setAttribute('data-p', id);
+    if (app.targets && app.targets[id]) {
+      els.ctaBtn.setAttribute('href', app.targets[id].launch);
+      els.ctaBtn.setAttribute('target', isScheme(app.targets[id].launch) ? '_self' : '_blank');
+    }
+    setCtaVisible(true);
+  }
+
+  function setCtaVisible(on) {
+    els.stickyCta.hidden = !on;
+    document.body.classList.toggle('has-cta', !!on);
+  }
+
+  function renderAll() {
+    renderModeButtons();
+    renderIntervalChips();
+    renderOrigin();
+    renderLinksAndDistance();
+    renderCmpStatus();
+    renderCountdown();
+    PROVIDERS.forEach(function (p) { renderCardResult(p.id); });
+    renderCta();
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 8. API
+   * ------------------------------------------------------------------ */
+  function applyProxy(url) {
+    var p = (app.cfg.keys.proxy || '').trim();
+    if (!p) return url;
+    if (p.indexOf('{url}') >= 0) return p.replace('{url}', encodeURIComponent(url));
+    return p + encodeURIComponent(url);
+  }
+
+  function fetchJson(url, opts, ms) {
+    var ctrl = null;
+    try { ctrl = new AbortController(); } catch (e) { ctrl = null; }
+    var timer = null;
+    var o = Object.assign({}, opts || {});
+    if (ctrl) o.signal = ctrl.signal;
+    if (ctrl) {
+      timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, ms || 8000);
+    }
+    return fetch(url, o).then(function (res) {
+      if (timer) clearTimeout(timer);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }, function (err) {
+      if (timer) clearTimeout(timer);
+      throw err;
+    });
+  }
+
+  function errText(e) {
+    var name = e && e.name ? e.name : '';
+    var msg = e && e.message ? String(e.message) : String(e || '');
+    if (name === 'AbortError' || /aborted/i.test(msg)) return '시간 초과 — 응답 없음';
+    if (/Failed to fetch|NetworkError|Load failed|Network request failed/i.test(msg)) return '연결 실패 — CORS 차단 또는 네트워크';
+    if (/HTTP 401|HTTP 403/.test(msg)) return '키 인증 실패 — API 키 확인';
+    if (/HTTP 429/.test(msg)) return '호출 한도 초과';
+    if (/HTTP 400/.test(msg)) return '요청 오류 — 좌표/키 확인';
+    if (/HTTP 5\d\d/.test(msg)) return '서버 오류 (잠시 후 재시도)';
+    if (/형식/.test(msg)) return msg;
+    return msg.slice(0, 70) || '알 수 없는 오류';
+  }
+
+  function fetchTmap(o) {
+    var d = app.cfg.dest;
+    var body = {
+      startX: String(round6(o.lng)),
+      startY: String(round6(o.lat)),
+      endX: String(round6(d.lng)),
+      endY: String(round6(d.lat)),
+      reqCoordType: 'WGS84GEO',
+      resCoordType: 'WGS84GEO',
+      searchOption: '0',
+      trafficInfo: 'Y'
+    };
+    return fetchJson(applyProxy('https://apis.openapi.sk.com/tmap/routes?version=1'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', appKey: app.cfg.keys.tmap.trim() },
+      body: JSON.stringify(body)
+    }, 9000).then(function (json) {
+      var f = json && json.features && json.features[0];
+      var pr = f && f.properties;
+      if (!pr || typeof pr.totalTime !== 'number') throw new Error('응답 형식 오류');
+      return {
+        ok: true,
+        durationSec: pr.totalTime,
+        distanceM: pr.totalDistance,
+        fareWon: (typeof pr.totalFare === 'number' ? pr.totalFare : null)
+      };
+    });
+  }
+
+  function fetchKakao(o) {
+    var d = app.cfg.dest;
+    var url = 'https://apis-navi.kakaomobility.com/v1/directions?origin=' + round6(o.lng) + ',' + round6(o.lat) +
+              '&destination=' + round6(d.lng) + ',' + round6(d.lat) + '&priority=RECOMMEND';
+    return fetchJson(applyProxy(url), {
+      method: 'GET',
+      headers: { Authorization: 'KakaoAK ' + app.cfg.keys.kakao.trim() }
+    }, 9000).then(function (json) {
+      var r = json && json.routes && json.routes[0];
+      var s = r && r.summary;
+      if (!s || typeof s.duration !== 'number') throw new Error('응답 형식 오류');
+      return {
+        ok: true,
+        durationSec: s.duration,
+        distanceM: s.distance,
+        fareWon: (s.fare && typeof s.fare.toll === 'number' ? s.fare.toll : null)
+      };
+    });
+  }
+
+  function fetchNaver(o) {
+    var d = app.cfg.dest;
+    var url = 'https://maps.apigw.ntruss.com/map-direction/v1/driving?start=' + round6(o.lng) + ',' + round6(o.lat) +
+              '&goal=' + round6(d.lng) + ',' + round6(d.lat) + '&option=trafast';
+    return fetchJson(applyProxy(url), {
+      method: 'GET',
+      headers: {
+        'x-ncp-apigw-api-key-id': app.cfg.keys.naverId.trim(),
+        'x-ncp-apigw-api-key': app.cfg.keys.naverSecret.trim()
+      }
+    }, 9000).then(function (json) {
+      var arr = json && json.route && json.route.trafast;
+      var s = arr && arr[0] && arr[0].summary;
+      if (!s || typeof s.duration !== 'number') throw new Error('응답 형식 오류');
+      // 네이버 Directions5의 duration 단위는 밀리초
+      var sec = s.duration > 3600 * 6 ? s.duration / 1000 : s.duration;
+      return {
+        ok: true,
+        durationSec: sec,
+        distanceM: s.distance,
+        fareWon: (typeof s.tollFare === 'number' ? s.tollFare : null)
+      };
+    });
+  }
+
+  function fetchOne(id, o) {
+    var p;
+    if (id === 'tmap') p = fetchTmap(o);
+    else if (id === 'kakao') p = fetchKakao(o);
+    else p = fetchNaver(o);
+    return p.then(function (r) { return r; }, function (e) { return { error: errText(e) }; });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 9. 새로고침 / 타이머
+   * ------------------------------------------------------------------ */
+  function scheduleNext(fromTs) {
+    if (app.interval > 0) app.nextAt = fromTs + app.interval * 1000;
+    else app.nextAt = 0;
+    renderCountdown();
+  }
+
+  function finishRefresh(startedAt) {
+    app.fetching = false;
+    els.btnRefresh.classList.remove('spin');
+    renderCmpStatus();
+    if (app.pendingRefresh) {
+      app.pendingRefresh = false;
+      refreshAll('pending');
+      return;
+    }
+    scheduleNext(startedAt);
+  }
+
+  function refreshAll(reason) {
+    if (app.fetching) { app.pendingRefresh = true; return Promise.resolve(); }
+    app.fetching = true;
+    var startedAt = Date.now();
+    app.lastRefreshAt = startedAt;
+
+    var o = originInfo();
+    renderLinksAndDistance();
+    renderOrigin();
+    renderCmpStatus();
+    renderCountdown();
+    els.btnRefresh.classList.add('spin');
+    try { if (navigator.vibrate && reason === 'manual') navigator.vibrate(12); } catch (e) {}
+
+    var ids = PROVIDERS.filter(function (p) { return hasKey(p.id); }).map(function (p) { return p.id; });
+    var seq = ++app.fetchSeq;
+
+    if (!ids.length) {
+      app.results = {};
+      app.fastest = null;
+      PROVIDERS.forEach(function (p) { renderCardResult(p.id); });
+      renderCta();
+      finishRefresh(startedAt);
+      return Promise.resolve();
+    }
+
+    app.fastest = null;
+    ids.forEach(function (id) { app.results[id] = { loading: true }; });
+    PROVIDERS.forEach(function (p) { renderCardResult(p.id); });
+    renderCta();
+
+    var jobs = ids.map(function (id) { return fetchOne(id, o); });
+
+    return Promise.all(jobs).then(function (out) {
+      if (seq !== app.fetchSeq) return;
+      ids.forEach(function (id, i) { app.results[id] = out[i]; });
+      var best = null, bestSec = Infinity;
+      ids.forEach(function (id) {
+        var r = app.results[id];
+        if (r && r.ok && typeof r.durationSec === 'number' && r.durationSec < bestSec) {
+          bestSec = r.durationSec; best = id;
+        }
+      });
+      app.fastest = best;
+      PROVIDERS.forEach(function (p) { renderCardResult(p.id); });
+      renderCta();
+    }).then(function () {
+      finishRefresh(startedAt);
+    }, function () {
+      finishRefresh(startedAt);
+    });
+  }
+
+  function tick() {
+    if (app.nextAt && Date.now() >= app.nextAt) {
+      app.nextAt = 0;
+      refreshAll('auto');
+      return;
+    }
+    renderCountdown();
+    if (app.mode === 'gps' && app.gps) {
+      els.statAgo.textContent = fmtAgo(app.gps.ts);
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 10. GPS
+   * ------------------------------------------------------------------ */
+  var GPS_MSG = {
+    1: '위치 권한이 차단되어 있어요. 주소창의 자물쇠(ⓘ) → 위치 → 허용으로 바꾼 뒤 다시 시도해 주세요.',
+    2: '위치를 잡지 못했어요. 하늘이 보이는 곳에서 잠시 기다리거나 테스트 위치를 사용하세요.',
+    3: '위치 요청 시간이 초과됐어요. 다시 시도해 주세요.'
+  };
+
+  function onPos(pos) {
+    if (!pos || !pos.coords) return;
+    var c = pos.coords;
+    app.gps = { lat: c.latitude, lng: c.longitude, acc: c.accuracy, ts: Date.now() };
+    app.gpsErr = null;
+    app.gpsErrCode = null;
+    renderOrigin();
+    renderLinksAndDistance();
+    if (app.mode === 'gps' && anyKey()) {
+      // 300m 이상 움직였을 때만 자동 재조회 (API 호출 절약)
+      var o = originInfo();
+      var moved = !app.lastApiPos || distanceKm(app.lastApiPos, o) > 0.3;
+      if (moved) {
+        app.lastApiPos = { lat: o.lat, lng: o.lng };
+        if (app.fetching) app.pendingRefresh = true;
+        else refreshAll('move');
+      }
+    }
+  }
+
+  function onGpsErr(err) {
+    app.gpsErrCode = err && err.code ? err.code : 2;
+    app.gpsErr = GPS_MSG[app.gpsErrCode] || '위치를 가져오지 못했어요.';
+    renderOrigin();
+  }
+
+  function stopWatch() {
+    if (app.watchId !== null) {
+      try { navigator.geolocation.clearWatch(app.watchId); } catch (e) {}
+      app.watchId = null;
+    }
+  }
+
+  function startGps() {
+    stopWatch();
+    app.gpsErr = null;
+    app.gpsErrCode = null;
+
+    if (!window.isSecureContext) {
+      app.gpsErr = 'HTTPS가 아니어서 브라우저 위치를 쓸 수 없어요. 테스트 위치로 표시합니다.';
+      app.gpsErrCode = 0;
+      renderOrigin();
+      return;
+    }
+    if (!navigator.geolocation) {
+      app.gpsErr = '이 브라우저는 위치 기능을 지원하지 않아요. 테스트 위치로 표시합니다.';
+      app.gpsErrCode = 0;
+      renderOrigin();
+      return;
+    }
+    renderOrigin();
+    try {
+      app.watchId = navigator.geolocation.watchPosition(onPos, onGpsErr, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 20000
+      });
+    } catch (e) {
+      app.gpsErr = '위치 추적을 시작하지 못했어요.';
+      renderOrigin();
+    }
+    try {
+      navigator.geolocation.getCurrentPosition(onPos, onGpsErr, {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 15000
+      });
+    } catch (e) { /* watchPosition 오류로 처리 */ }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 11. 토스트
+   * ------------------------------------------------------------------ */
+  var toastTimer = null;
+  function showToast(title, body, actions) {
+    var box = els.toast;
+    var html = '<b>' + esc(title) + '</b>' + (body ? '<p>' + esc(body) + '</p>' : '');
+    if (actions && actions.length) {
+      html += '<div class="t-actions">';
+      actions.forEach(function (a, i) {
+        if (a.href) {
+          html += '<a class="' + (i === 0 ? 'pri' : '') + '" href="' + esc(a.href) + '" target="_blank" rel="noopener noreferrer">' + esc(a.label) + '</a>';
+        } else {
+          html += '<button type="button" data-close="1">' + esc(a.label) + '</button>';
+        }
+      });
+      html += '</div>';
+    }
+    box.innerHTML = html;
+    box.hidden = false;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { box.hidden = true; }, 9000);
+  }
+
+  function hideToast() {
+    els.toast.hidden = true;
+    if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  }
+
+  /* 앱 스킴 실행 실패 감지 */
+  var launchGuardAt = 0;
+  function guardLaunch(a) {
+    var now = Date.now();
+    if (now - launchGuardAt < 1200) return;
+    launchGuardAt = now;
+
+    var left = false;
+    function onHide() { left = true; }
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+
+    var pid = '';
+    if (a && a.getAttribute) pid = a.getAttribute('data-p') || '';
+    if (!pid && a && a.closest && a.closest('.prov')) pid = a.closest('.prov').getAttribute('data-p') || '';
+    var p = PROVIDERS.filter(function (x) { return x.id === pid; })[0];
+    var webHref = null;
+    if (app.targets && app.targets[pid]) {
+      var t = app.targets[pid];
+      webHref = t.launch.indexOf('http') === 0 ? t.launch : (t.links && t.links.web ? t.links.web : null);
+    }
+    var install = p ? p.links.filter(function (l) { return l.key === 'install'; })[0] : null;
+
+    setTimeout(function () {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+      if (left || document.hidden) return;
+      var acts = [];
+      if (webHref) acts.push({ label: '웹으로 열기', href: webHref });
+      if (install) acts.push({ label: '앱 설치', href: install.href });
+      acts.push({ label: '닫기' });
+      showToast('앱이 열리지 않았어요', (p ? p.name : '해당') + ' 앱이 설치되어 있지 않거나, 브라우저가 앱 실행을 막았습니다.', acts);
+    }, 2000);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 12. 설정
+   * ------------------------------------------------------------------ */
+  function fillSettings(cfg) {
+    var c = cfg || app.cfg;
+    els.fDestName.value = c.dest.name;
+    els.fDestAddr.value = c.dest.addr;
+    els.fDestLat.value = String(c.dest.lat);
+    els.fDestLng.value = String(c.dest.lng);
+    els.fTestName.value = c.test.name;
+    els.fTestAddr.value = c.test.addr;
+    els.fTestLat.value = String(c.test.lat);
+    els.fTestLng.value = String(c.test.lng);
+    els.fTmap.value = c.keys.tmap;
+    els.fKakao.value = c.keys.kakao;
+    els.fNaverId.value = c.keys.naverId;
+    els.fNaverSecret.value = c.keys.naverSecret;
+    els.fProxy.value = c.keys.proxy;
+    els.formErr.hidden = true;
+  }
+
+  function openSettings() {
+    fillSettings();
+    els.settingsModal.hidden = false;
+  }
+  function closeSettings() {
+    els.settingsModal.hidden = true;
+  }
+
+  function readCoord(input, min, max) {
+    var v = parseFloat(String(input.value).replace(/,/g, '.').trim());
+    if (!isFinite(v) || v < min || v > max) return null;
+    return v;
+  }
+
+  function saveSettings(ev) {
+    ev.preventDefault();
+    var dLat = readCoord(els.fDestLat, -90, 90);
+    var dLng = readCoord(els.fDestLng, -180, 180);
+    var tLat = readCoord(els.fTestLat, -90, 90);
+    var tLng = readCoord(els.fTestLng, -180, 180);
+
+    if (dLat === null || dLng === null) {
+      els.formErr.textContent = '도착지 위도/경도를 확인해 주세요. (위도 -90~90, 경도 -180~180)';
+      els.formErr.hidden = false;
+      return;
+    }
+    if (tLat === null || tLng === null) {
+      els.formErr.textContent = '테스트 출발지 위도/경도를 확인해 주세요.';
+      els.formErr.hidden = false;
+      return;
+    }
+    var dName = els.fDestName.value.trim();
+    var tName = els.fTestName.value.trim();
+    if (!dName || !tName) {
+      els.formErr.textContent = '이름을 입력해 주세요.';
+      els.formErr.hidden = false;
+      return;
+    }
+
+    app.cfg.dest = { name: dName, addr: els.fDestAddr.value.trim(), lat: dLat, lng: dLng };
+    app.cfg.test = { name: tName, addr: els.fTestAddr.value.trim(), lat: tLat, lng: tLng };
+    app.cfg.keys = {
+      tmap: els.fTmap.value.trim(),
+      kakao: els.fKakao.value.trim(),
+      naverId: els.fNaverId.value.trim(),
+      naverSecret: els.fNaverSecret.value.trim(),
+      proxy: els.fProxy.value.trim()
+    };
+    saveCfg();
+    closeSettings();
+    renderDest();
+    renderLinksAndDistance();
+    renderCmpStatus();
+    refreshAll('settings');
+    showToast('설정을 저장했어요', anyKey() ? 'API 키가 설정되어 실시간 비교를 시작합니다.' : 'API 키가 없어 앱 바로 열기 모드로 동작합니다.', [{ label: '확인' }]);
+  }
+
+  function resetSettings() {
+    // 입력값만 기본값으로 되돌리고, 저장은 [저장]을 눌렀을 때 반영합니다.
+    fillSettings(defaultCfg());
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 13. 이벤트
+   * ------------------------------------------------------------------ */
+  function bindEvents() {
+    els.btnTheme.addEventListener('click', function () {
+      app.theme = app.theme === 'dark' ? 'light' : 'dark';
+      applyTheme();
+      saveCfg();
+    });
+    els.btnSettings.addEventListener('click', openSettings);
+    els.setClose.addEventListener('click', closeSettings);
+    els.settingsModal.addEventListener('click', function (ev) {
+      if (ev.target === els.settingsModal) closeSettings();
+    });
+    els.setForm.addEventListener('submit', saveSettings);
+    els.setReset.addEventListener('click', resetSettings);
+
+    els.modeSeg.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-mode]') : null;
+      if (!b) return;
+      var mode = b.getAttribute('data-mode');
+      if (mode === app.mode) return;
+      app.mode = mode;
+      renderModeButtons();
+      if (mode === 'gps') startGps();
+      else { stopWatch(); renderOrigin(); }
+      refreshAll('mode');
+    });
+
+    els.btnGpsRetry.addEventListener('click', function () {
+      app.mode = 'gps';
+      renderModeButtons();
+      app.gps = null;
+      startGps();
+      refreshAll('gps-retry');
+    });
+
+    els.btnRefresh.addEventListener('click', function () {
+      if (app.mode === 'gps' && navigator.geolocation && window.isSecureContext) {
+        try {
+          navigator.geolocation.getCurrentPosition(onPos, onGpsErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 });
+        } catch (e) {}
+      }
+      refreshAll('manual');
+    });
+
+    els.intervalChips.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-sec]') : null;
+      if (!b) return;
+      var sec = Number(b.getAttribute('data-sec'));
+      app.interval = sec;
+      saveCfg();
+      renderIntervalChips();
+      if (sec > 0) scheduleNext(Date.now());
+      else { app.nextAt = 0; renderCountdown(); }
+    });
+
+    els.cards.addEventListener('click', function (ev) {
+      var a = ev.target.closest ? ev.target.closest('a') : null;
+      if (!a) return;
+      var href = a.getAttribute('href') || '';
+      if (/^(nmap|tmap|kakaomap):\/\//.test(href)) guardLaunch(a);
+    });
+
+    els.ctaBtn.addEventListener('click', function () {
+      var href = els.ctaBtn.getAttribute('href') || '';
+      if (/^(nmap|tmap|kakaomap):\/\//.test(href)) guardLaunch(els.ctaBtn);
+    });
+
+    els.toast.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('[data-close]') : null;
+      if (b) hideToast();
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        if (!els.settingsModal.hidden) closeSettings();
+        else hideToast();
+      }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) {
+        renderOrigin();
+        renderCountdown();
+        if (anyKey() && Date.now() - app.lastRefreshAt > 45000) refreshAll('resume');
+      }
+    });
+
+    window.addEventListener('online', function () { refreshAll('online'); });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 14. 시작
+   * ------------------------------------------------------------------ */
+  function init() {
+    els = {
+      headDest: $('headDest'),
+      btnTheme: $('btnTheme'),
+      btnSettings: $('btnSettings'),
+      modeSeg: qs('.seg'),
+      originDot: $('originDot'),
+      originName: $('originName'),
+      originSub: $('originSub'),
+      statCoord: $('statCoord'),
+      statAcc: $('statAcc'),
+      statAgo: $('statAgo'),
+      gpsWarn: $('gpsWarn'),
+      btnGpsRetry: $('btnGpsRetry'),
+      cdNum: $('cdNum'),
+      cdUnit: $('cdUnit'),
+      cdSub: $('cdSub'),
+      btnRefresh: $('btnRefresh'),
+      intervalChips: $('intervalChips'),
+      destName: $('destName'),
+      destAddr: $('destAddr'),
+      straight: $('straight'),
+      distFrom: $('distFrom'),
+      cmpStatus: $('cmpStatus'),
+      keysBanner: $('keysBanner'),
+      cards: $('cards'),
+      stickyCta: $('stickyCta'),
+      ctaBtn: $('ctaBtn'),
+      toast: $('toast'),
+      settingsModal: $('settingsModal'),
+      setForm: $('setForm'),
+      setClose: $('setClose'),
+      setReset: $('setReset'),
+      formErr: $('formErr'),
+      fDestName: $('fDestName'),
+      fDestAddr: $('fDestAddr'),
+      fDestLat: $('fDestLat'),
+      fDestLng: $('fDestLng'),
+      fTestName: $('fTestName'),
+      fTestAddr: $('fTestAddr'),
+      fTestLat: $('fTestLat'),
+      fTestLng: $('fTestLng'),
+      fTmap: $('fTmap'),
+      fKakao: $('fKakao'),
+      fNaverId: $('fNaverId'),
+      fNaverSecret: $('fNaverSecret'),
+      fProxy: $('fProxy')
+    };
+
+    applyHashConfig();
+    app.cfg = loadCfg();
+    app.theme = app.cfg.theme;
+    app.interval = (app.cfg.interval === 30 || app.cfg.interval === 60 || app.cfg.interval === 180 || app.cfg.interval === 0)
+      ? app.cfg.interval : 60;
+
+    applyTheme();
+    renderDest();
+    renderCards();
+    bindEvents();
+    renderAll();
+
+    if (app.mode === 'gps') startGps();
+
+    // 첫 갱신
+    refreshAll('init');
+    setInterval(tick, 500);
+
+    // 자정 등으로 날짜가 바뀌어도 시계 표시 유지
+    setInterval(function () {
+      if (!app.fetching) renderCountdown();
+    }, 5000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
